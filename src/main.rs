@@ -19,7 +19,6 @@ mod blinker;
 #[app(device = f3::hal::stm32f30x, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
     struct Resources {
-        led: Leds,
         blinker: Blinker,
     }
 
@@ -36,12 +35,11 @@ const APP: () = {
         let mut rcc = device.RCC.constrain();
 
         let led = Leds::new(device.GPIOE.split(&mut rcc.ahb));
-
-        let blinker = Blinker { led: 0 };
+        let blinker = Blinker::new(led);
 
         cx.spawn.blinky().ok();
 
-        init::LateResources { led, blinker }
+        init::LateResources { blinker }
     }
 
     #[idle]
@@ -53,14 +51,12 @@ const APP: () = {
         }
     }
 
-    #[task(schedule = [blinky], resources = [led, blinker])]
+    #[task(schedule = [blinky], resources = [blinker])]
     fn blinky(cx: blinky::Context) {
         rprintln!("Blink");
 
-        let led: &mut Leds = cx.resources.led;
         let blinker = cx.resources.blinker;
-
-        blinker.run(led);
+        blinker.run();
 
         cx.schedule.blinky(cx.scheduled + 2_000_000.cycles()).ok();
     }
