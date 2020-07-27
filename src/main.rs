@@ -166,6 +166,9 @@ const APP: () = {
     // software tasks. We need need one free interrupt per software task priority level.
     extern "C" {
         fn CAN_RX1();
+    //fn CAN_TX1();
+    //fn CAN_RX2();
+    //fn CAN_TX2();
     }
 };
 
