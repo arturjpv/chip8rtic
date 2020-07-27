@@ -44,6 +44,9 @@ const APP: () = {
         rtt_init_print!();
         rprintln!("Init");
 
+        //
+        // Acquire and configure STM resources
+        //
         let mut core = cx.core;
         core.DCB.enable_trace();
         core.DWT.enable_cycle_counter();
@@ -53,9 +56,15 @@ const APP: () = {
         let mut flash = device.FLASH.constrain();
         rcc.cfgr.sysclk(FREQUENCY).freeze(&mut flash.acr);
 
+        //
+        // Create time "debug" measure task
+        //
         let led = Leds::new(device.GPIOE.split(&mut rcc.ahb));
         let blinker = Blinker::new(led);
 
+        //
+        // Create chip8 resources
+        //
         let mut chip8 = chip8vm::chip::Chip::default();
         let random = random::Random::new();
         let screen = screen::Screen::new();
@@ -74,6 +83,9 @@ const APP: () = {
         cx.spawn.display().ok();
         cx.spawn.input().ok();
 
+        //
+        // Init RTIC resources
+        //
         init::LateResources {
             blinker,
             chip8,
