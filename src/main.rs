@@ -12,6 +12,7 @@ use rtt_target::{rprintln, rtt_init_print};
 use crate::blinker::Blinker;
 
 use f3::hal::gpio::GpioExt;
+use f3::hal::i2c::I2c;
 use f3::hal::prelude::*;
 use f3::hal::rcc::RccExt;
 use f3::hal::time;
@@ -54,7 +55,7 @@ const APP: () = {
         let device = cx.device;
         let mut rcc = device.RCC.constrain();
         let mut flash = device.FLASH.constrain();
-        rcc.cfgr.sysclk(FREQUENCY).freeze(&mut flash.acr);
+        let clocks = rcc.cfgr.sysclk(FREQUENCY).freeze(&mut flash.acr);
 
         //
         // Create time "debug" measure task
@@ -63,11 +64,19 @@ const APP: () = {
         let blinker = Blinker::new(led);
 
         //
+        // Get I2C
+        //
+        let mut gpiob = device.GPIOB.split(&mut rcc.ahb);
+        let scl = gpiob.pb6.into_af4(&mut gpiob.moder, &mut gpiob.afrl);
+        let sda = gpiob.pb7.into_af4(&mut gpiob.moder, &mut gpiob.afrl);
+        let i2c = I2c::i2c1(device.I2C1, (scl, sda), 1.mhz(), clocks, &mut rcc.apb1);
+
+        //
         // Create chip8 resources
         //
         let mut chip8 = chip8vm::chip::Chip::default();
         let random = random::Random::new();
-        let screen = screen::Screen::new();
+        let screen = screen::Screen::new(i2c);
         let keypad = keypad::Keypad::new();
 
         //
@@ -149,7 +158,7 @@ const APP: () = {
 
     #[task(schedule = [display], resources = [screen])]
     fn display(cx: display::Context) {
-        static TASK_FREQUENCY: Hertz = Hertz(15);
+        static TASK_FREQUENCY: Hertz = Hertz(12);
 
         let screen = cx.resources.screen;
 
