@@ -15,6 +15,7 @@ const DISPLAY_SIZE: usize = (DISPLAY_WIDTH * DISPLAY_HEIGHT) / PAGE_SIZE;
 pub struct Screen {
     pixels: [u8; DISPLAY_SIZE],
     stencil: [u8; DISPLAY_SIZE],
+    dirty: [u8; PAGE_SIZE],
     i2c: I2c<I2C1, (PB6<AF4>, PB7<AF4>)>,
 }
 
@@ -23,6 +24,7 @@ impl Screen {
         Screen {
             pixels: [0u8; DISPLAY_SIZE],
             stencil: [1u8; DISPLAY_SIZE],
+            dirty: [1u8; PAGE_SIZE],
             i2c,
         }
     }
@@ -50,23 +52,27 @@ impl Screen {
         paint_cmd[0] = 0x40;
 
         for page in 0..PAGE_SIZE {
-            self.i2c.write(0x3C, &[0x00, 0xB0 | page as u8]).unwrap(); // Page Address
+            if self.dirty[page] != 0 {
+                self.i2c.write(0x3C, &[0x00, 0xB0 | page as u8]).unwrap(); // Page Address
 
-            for column in 0..DISPLAY_WIDTH {
-                let position = page * DISPLAY_WIDTH + column;
-                if self.stencil[position] != 0 {
-                    self.stencil[position] = 0;
-                    paint_cmd[1] = self.pixels[position];
+                for column in 0..DISPLAY_WIDTH {
+                    let position = page * DISPLAY_WIDTH + column;
+                    if self.stencil[position] != 0 {
+                        self.stencil[position] = 0;
+                        paint_cmd[1] = self.pixels[position];
 
-                    self.i2c
-                        .write(0x3C, &[0x00, 0x0F & (column + 2) as u8])
-                        .unwrap(); // Column Address Low
-                    self.i2c
-                        .write(0x3C, &[0x00, 0x10 | ((column + 2) as u8 >> 4)])
-                        .unwrap(); // Column Address High
-                    self.i2c.write(0x3C, &paint_cmd).unwrap(); // Display Data
+                        self.i2c
+                            .write(0x3C, &[0x00, 0x0F & (column + 2) as u8])
+                            .unwrap(); // Column Address Low
+                        self.i2c
+                            .write(0x3C, &[0x00, 0x10 | ((column + 2) as u8 >> 4)])
+                            .unwrap(); // Column Address High
+                        self.i2c.write(0x3C, &paint_cmd).unwrap(); // Display Data
+                    }
                 }
             }
+
+            self.dirty[page] = 0;
         }
     }
 
@@ -79,6 +85,7 @@ impl Screen {
         let collision = self.pixels[byte] & mask != 0;
         self.pixels[byte] ^= mask;
         self.stencil[byte] |= mask;
+        self.dirty[page] = 1;
 
         collision
     }
