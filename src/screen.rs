@@ -1,8 +1,7 @@
-use f3::hal::gpio::gpiob::{PB6, PB7};
-use f3::hal::gpio::AF4;
-use f3::hal::i2c::I2c;
-use f3::hal::prelude::*;
-use f3::hal::stm32f30x::I2C1;
+use stm32f3xx_hal::gpio::{gpiob::PB6, gpiob::PB7, AF4};
+use stm32f3xx_hal::hal::blocking::i2c::Write;
+use stm32f3xx_hal::i2c::I2c;
+use stm32f3xx_hal::pac::I2C1;
 
 use chip8vm;
 use chip8vm::{SCREEN_HEIGHT, SCREEN_WIDTH};

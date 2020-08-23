@@ -17,9 +17,9 @@ cortex-m-rtic = "0.5"
 features = ["cortex-m"]
 version = "0.2.0"
 
-[dependencies.f3]
-features = ["rt"]
-version = "0.6.1"
+[dependencies.stm32f3xx-hal]
+version = "0.5.0"
+features = ["stm32f303xc", "rt", "unproven"]
 
 [[bin]]
 name = "chip8rtic"

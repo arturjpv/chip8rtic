@@ -9,18 +9,14 @@ use rtic::app;
 use rtic::cyccnt::{Duration, U32Ext};
 use rtt_target::{rprintln, rtt_init_print};
 
-use crate::blinker::Blinker;
-
-use f3::hal::gpio::GpioExt;
-use f3::hal::i2c::I2c;
-use f3::hal::prelude::*;
-use f3::hal::rcc::RccExt;
-use f3::hal::time;
-use f3::hal::time::{Hertz, MegaHertz};
-use f3::led::Leds;
+use stm32f3xx_hal::flash::FlashExt;
+use stm32f3xx_hal::gpio::GpioExt;
+use stm32f3xx_hal::i2c::I2c;
+use stm32f3xx_hal::rcc::RccExt;
+use stm32f3xx_hal::time::{self, Hertz, MegaHertz};
 
 use chip8vm::PROGRAM_SIZE;
-mod blinker;
+
 mod keypad;
 mod random;
 
@@ -32,19 +28,18 @@ static FREQUENCY: MegaHertz = time::MegaHertz(36);
 //const ROM_BRIX: &[u8; 280] = include_bytes!("../games/BRIX");
 //const ROM_VBRIX: &[u8; 507] = include_bytes!("../games/VBRIX");
 //const ROM_TETRIS: &[u8; 494] = include_bytes!("../games/TETRIS");
-const ROM: &[u8; 246] = include_bytes!("../games/PONG");
+const ROM: &[u8; 280] = include_bytes!("../games/BRIX");
 
-#[app(device = f3::hal::stm32f30x, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+#[app(device = stm32f3xx_hal::stm32, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
     struct Resources {
-        blinker: Blinker,
         chip8: chip8vm::chip::Chip,
         random: random::Random,
         screen: screen::Screen,
         keypad: keypad::Keypad,
     }
 
-    #[init(spawn = [blinky, cpu, timers, display, input])]
+    #[init(spawn = [cpu, timers, display, input])]
     fn init(cx: init::Context) -> init::LateResources {
         rtt_init_print!();
         rprintln!("Init");
@@ -56,16 +51,15 @@ const APP: () = {
         core.DCB.enable_trace();
         core.DWT.enable_cycle_counter();
 
-        let device = cx.device;
+        let device: stm32f3xx_hal::stm32::Peripherals = cx.device;
         let mut rcc = device.RCC.constrain();
         let mut flash = device.FLASH.constrain();
         let clocks = rcc.cfgr.sysclk(FREQUENCY).freeze(&mut flash.acr);
 
         //
-        // Create time "debug" measure task
+        // Enable GPIOs
         //
-        let led = Leds::new(device.GPIOE.split(&mut rcc.ahb));
-        let blinker = Blinker::new(led);
+        let input = device.GPIOD.split(&mut rcc.ahb);
 
         //
         // Get I2C
@@ -73,14 +67,20 @@ const APP: () = {
         let mut gpiob = device.GPIOB.split(&mut rcc.ahb);
         let scl = gpiob.pb6.into_af4(&mut gpiob.moder, &mut gpiob.afrl);
         let sda = gpiob.pb7.into_af4(&mut gpiob.moder, &mut gpiob.afrl);
-        let i2c = I2c::i2c1(device.I2C1, (scl, sda), 1.mhz(), clocks, &mut rcc.apb1);
+        let i2c = I2c::i2c1(
+            device.I2C1,
+            (scl, sda),
+            time::MegaHertz(1),
+            clocks,
+            &mut rcc.apb1,
+        );
 
         //
         // Create chip8 resources
         //
         let mut chip8 = chip8vm::chip::Chip::default();
         let random = random::Random::new();
-        let keypad = keypad::Keypad::new();
+        let keypad = keypad::Keypad::new(input);
         let mut screen = screen::Screen::new(i2c);
         screen.init();
 
@@ -91,7 +91,6 @@ const APP: () = {
         program[0..ROM.len()].copy_from_slice(ROM);
         chip8.load_program(program);
 
-        cx.spawn.blinky().ok();
         cx.spawn.cpu().ok();
         cx.spawn.timers().ok();
         cx.spawn.display().ok();
@@ -101,7 +100,6 @@ const APP: () = {
         // Init RTIC resources
         //
         init::LateResources {
-            blinker,
             chip8,
             random,
             screen,
@@ -116,18 +114,6 @@ const APP: () = {
         loop {
             continue;
         }
-    }
-
-    #[task(schedule = [blinky], resources = [blinker])]
-    fn blinky(cx: blinky::Context) {
-        static TASK_FREQUENCY: Hertz = Hertz(1);
-
-        let blinker = cx.resources.blinker;
-        blinker.run();
-
-        cx.schedule
-            .blinky(cx.scheduled + plan_task(TASK_FREQUENCY))
-            .ok();
     }
 
     #[task(schedule = [cpu], resources = [chip8, random, screen, keypad])]
