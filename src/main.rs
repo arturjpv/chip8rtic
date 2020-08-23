@@ -10,11 +10,12 @@ use rtic::cyccnt::{Duration, U32Ext};
 use rtt_target::{rprintln, rtt_init_print};
 
 use stm32f3xx_hal::flash::FlashExt;
-use stm32f3xx_hal::gpio::GpioExt;
+use stm32f3xx_hal::gpio::{gpiod, GpioExt};
 use stm32f3xx_hal::i2c::I2c;
 use stm32f3xx_hal::rcc::RccExt;
 use stm32f3xx_hal::time::{self, Hertz, MegaHertz};
 
+use crate::keypad::Buttons;
 use chip8vm::PROGRAM_SIZE;
 
 mod keypad;
@@ -37,6 +38,7 @@ const APP: () = {
         random: random::Random,
         screen: screen::Screen,
         keypad: keypad::Keypad,
+        buttons: Buttons,
     }
 
     #[init(spawn = [cpu, timers, display, input])]
@@ -59,7 +61,17 @@ const APP: () = {
         //
         // Enable GPIOs
         //
-        let input = device.GPIOD.split(&mut rcc.ahb);
+        let mut input: gpiod::Parts = device.GPIOD.split(&mut rcc.ahb);
+
+        let button1 = input
+            .pd8
+            .into_pull_up_input(&mut input.moder, &mut input.pupdr);
+
+        let button2 = input
+            .pd9
+            .into_pull_up_input(&mut input.moder, &mut input.pupdr);
+
+        let buttons = Buttons { button1, button2 };
 
         //
         // Get I2C
@@ -80,7 +92,7 @@ const APP: () = {
         //
         let mut chip8 = chip8vm::chip::Chip::default();
         let random = random::Random::new();
-        let keypad = keypad::Keypad::new(input);
+        let keypad = keypad::Keypad::new();
         let mut screen = screen::Screen::new(i2c);
         screen.init();
 
@@ -104,6 +116,7 @@ const APP: () = {
             random,
             screen,
             keypad,
+            buttons,
         }
     }
 
@@ -158,13 +171,14 @@ const APP: () = {
             .ok();
     }
 
-    #[task(schedule = [input], resources = [keypad])]
+    #[task(schedule = [input], resources = [keypad, buttons])]
     fn input(cx: input::Context) {
         static TASK_FREQUENCY: Hertz = Hertz(15);
 
         let keypad = cx.resources.keypad;
+        let buttons = cx.resources.buttons;
 
-        keypad.check();
+        keypad.check(&buttons.button1, &buttons.button2);
 
         cx.schedule
             .input(cx.scheduled + plan_task(TASK_FREQUENCY))
