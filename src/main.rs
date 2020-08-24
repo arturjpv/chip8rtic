@@ -29,7 +29,7 @@ static FREQUENCY: MegaHertz = time::MegaHertz(36);
 //const ROM_BRIX: &[u8; 280] = include_bytes!("../games/BRIX");
 //const ROM_VBRIX: &[u8; 507] = include_bytes!("../games/VBRIX");
 //const ROM_TETRIS: &[u8; 494] = include_bytes!("../games/TETRIS");
-const ROM: &[u8; 280] = include_bytes!("../games/BRIX");
+const ROM: &[u8; 494] = include_bytes!("../games/TETRIS");
 
 #[app(device = stm32f3xx_hal::stm32, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
@@ -44,7 +44,7 @@ const APP: () = {
     #[init(spawn = [cpu, timers, display, input])]
     fn init(cx: init::Context) -> init::LateResources {
         rtt_init_print!();
-        rprintln!("Init");
+        rprintln!("Init Start");
 
         //
         // Acquire and configure STM resources
@@ -71,7 +71,40 @@ const APP: () = {
             .pd9
             .into_pull_up_input(&mut input.moder, &mut input.pupdr);
 
-        let buttons = Buttons { button1, button2 };
+        let button3 = input
+            .pd10
+            .into_pull_up_input(&mut input.moder, &mut input.pupdr);
+
+        let button4 = input
+            .pd11
+            .into_pull_up_input(&mut input.moder, &mut input.pupdr);
+
+        let button5 = input
+            .pd12
+            .into_pull_up_input(&mut input.moder, &mut input.pupdr);
+
+        let button6 = input
+            .pd13
+            .into_pull_up_input(&mut input.moder, &mut input.pupdr);
+
+        let button7 = input
+            .pd14
+            .into_pull_up_input(&mut input.moder, &mut input.pupdr);
+
+        let button8 = input
+            .pd15
+            .into_pull_up_input(&mut input.moder, &mut input.pupdr);
+
+        let buttons = Buttons {
+            button1,
+            button2,
+            button3,
+            button4,
+            button5,
+            button6,
+            button7,
+            button8,
+        };
 
         //
         // Get I2C
@@ -107,6 +140,8 @@ const APP: () = {
         cx.spawn.timers().ok();
         cx.spawn.display().ok();
         cx.spawn.input().ok();
+
+        rprintln!("Init End");
 
         //
         // Init RTIC resources
@@ -178,7 +213,16 @@ const APP: () = {
         let keypad = cx.resources.keypad;
         let buttons = cx.resources.buttons;
 
-        keypad.check(&buttons.button1, &buttons.button2);
+        keypad.check(
+            &buttons.button1,
+            &buttons.button2,
+            &buttons.button3,
+            &buttons.button4,
+            &buttons.button5,
+            &buttons.button6,
+            &buttons.button7,
+            &buttons.button8,
+        );
 
         cx.schedule
             .input(cx.scheduled + plan_task(TASK_FREQUENCY))
