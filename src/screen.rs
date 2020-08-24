@@ -91,7 +91,16 @@ impl Screen {
 }
 
 impl chip8vm::Screen for Screen {
-    fn clear(&mut self) {}
+    fn clear(&mut self) {
+        for i in 0..DISPLAY_SIZE {
+            self.pixels[i] = 0;
+            self.stencil[i] = 1;
+        }
+
+        for i in 0..PAGE_SIZE {
+            self.dirty[i] = 1;
+        }
+    }
 
     fn draw(&mut self, x: u8, y: u8) -> bool {
         self.put_pixel(x * 2, y * 2);
