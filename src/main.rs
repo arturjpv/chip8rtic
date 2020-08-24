@@ -25,11 +25,25 @@ mod screen;
 static FREQUENCY: MegaHertz = time::MegaHertz(36);
 
 //const ROM_MAZE: &[u8; 34] = include_bytes!("../games/MAZE");
-//const ROM_PONG: &[u8; 246] = include_bytes!("../games/PONG");
+//const KEYMAP_MAZE: [u8; 8] = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+
+//const ROM_PONG: &[u8; 264] = include_bytes!("../games/PONG2");
+//const KEYMAP_PONG: [u8; 8] = [0u8, 0u8, 1u8, 4u8, 0u8, 0u8, Cu8, Du8];
+
 //const ROM_BRIX: &[u8; 280] = include_bytes!("../games/BRIX");
+//const KEYMAP_BRIX: [u8; 8] = [4u8, 6u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+
 //const ROM_VBRIX: &[u8; 507] = include_bytes!("../games/VBRIX");
+//const KEYMAP_VBRIX: [u8; 8] = [0u8, 0u8, 1u8, 4u8, 0u8, 0u8, 0u8, 7u8];
+
 //const ROM_TETRIS: &[u8; 494] = include_bytes!("../games/TETRIS");
-const ROM: &[u8; 494] = include_bytes!("../games/TETRIS");
+//const KEYMAP_TETRIS: [u8; 8] = [5u8, 6u8, 0u8, 7u8, 0u8, 0u8, 0u8, 4u8];
+
+//const ROM_INVADERS: &[u8; 1283] = include_bytes!("../games/INVADERS");
+//const KEYMAP_INVADERS: [u8; 8] = [4u8, 6u8, 0u8, 0u8, 0u8, 0u8, 0u8, 5u8];
+
+const ROM: &[u8; 264] = include_bytes!("../games/PONG2");
+const KEYMAP: [u8; 8] = [0x0u8, 0x0u8, 0x1u8, 0x4u8, 0x0u8, 0x0u8, 0xCu8, 0xDu8];
 
 #[app(device = stm32f3xx_hal::stm32, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
@@ -125,7 +139,7 @@ const APP: () = {
         //
         let mut chip8 = chip8vm::chip::Chip::default();
         let random = random::Random::new();
-        let keypad = keypad::Keypad::new();
+        let keypad = keypad::Keypad::new(KEYMAP);
         let mut screen = screen::Screen::new(i2c);
         screen.init();
 

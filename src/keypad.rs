@@ -26,12 +26,14 @@ pub enum KeyState {
 
 pub struct Keypad {
     keys: [KeyState; chip8vm::KEYPAD_NUM_KEYS],
+    keymap: [u8; 8],
 }
 
 impl Keypad {
-    pub fn new() -> Keypad {
+    pub fn new(keymap: [u8; 8]) -> Keypad {
         Keypad {
             keys: [KeyState::RELEASED; chip8vm::KEYPAD_NUM_KEYS],
+            keymap,
         }
     }
 
@@ -46,59 +48,59 @@ impl Keypad {
         button7: &impl InputPin,
         button8: &impl InputPin,
     ) {
+        // Left Pad 1
         match button1.is_low() {
-            // Left Pad 1
-            Ok(true) => self.keys[5] = PRESSED,
-            Ok(false) => self.keys[5] = RELEASED,
+            Ok(true) => self.keys[self.keymap[0] as usize] = PRESSED,
+            Ok(false) => self.keys[self.keymap[0] as usize] = RELEASED,
             Err(_) => {}
         }
 
         match button2.is_low() {
             // Right Pad 1
-            Ok(true) => self.keys[6] = PRESSED,
-            Ok(false) => self.keys[6] = RELEASED,
+            Ok(true) => self.keys[self.keymap[1] as usize] = PRESSED,
+            Ok(false) => self.keys[self.keymap[1] as usize] = RELEASED,
             Err(_) => {}
         }
 
         // Up Pad 1
         match button3.is_low() {
-            Ok(true) => self.keys[0] = PRESSED,
-            Ok(false) => self.keys[0] = RELEASED,
+            Ok(true) => self.keys[self.keymap[2] as usize] = PRESSED,
+            Ok(false) => self.keys[self.keymap[2] as usize] = RELEASED,
             Err(_) => {}
         }
 
         // Down Pad 1
         match button4.is_low() {
-            Ok(true) => self.keys[7] = PRESSED,
-            Ok(false) => self.keys[7] = RELEASED,
+            Ok(true) => self.keys[self.keymap[3] as usize] = PRESSED,
+            Ok(false) => self.keys[self.keymap[3] as usize] = RELEASED,
             Err(_) => {}
         }
 
         // Left Pad 2
         match button5.is_low() {
-            Ok(true) => self.keys[0] = PRESSED,
-            Ok(false) => self.keys[0] = RELEASED,
+            Ok(true) => self.keys[self.keymap[4] as usize] = PRESSED,
+            Ok(false) => self.keys[self.keymap[4] as usize] = RELEASED,
             Err(_) => {}
         }
 
         // Right Pad 2
         match button6.is_low() {
-            Ok(true) => self.keys[0] = PRESSED,
-            Ok(false) => self.keys[0] = RELEASED,
+            Ok(true) => self.keys[self.keymap[5] as usize] = PRESSED,
+            Ok(false) => self.keys[self.keymap[5] as usize] = RELEASED,
             Err(_) => {}
         }
 
         // Up Pad 2
         match button7.is_low() {
-            Ok(true) => self.keys[0] = PRESSED,
-            Ok(false) => self.keys[0] = RELEASED,
+            Ok(true) => self.keys[self.keymap[6] as usize] = PRESSED,
+            Ok(false) => self.keys[self.keymap[6] as usize] = RELEASED,
             Err(_) => {}
         }
 
         // Down Pad 2
         match button8.is_low() {
-            Ok(true) => self.keys[4] = PRESSED,
-            Ok(false) => self.keys[4] = RELEASED,
+            Ok(true) => self.keys[self.keymap[7] as usize] = PRESSED,
+            Ok(false) => self.keys[self.keymap[7] as usize] = RELEASED,
             Err(_) => {}
         }
     }
