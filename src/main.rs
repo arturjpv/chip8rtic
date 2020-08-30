@@ -42,8 +42,8 @@ static FREQUENCY: MegaHertz = time::MegaHertz(36);
 //const ROM_INVADERS: &[u8; 1283] = include_bytes!("../games/INVADERS");
 //const KEYMAP_INVADERS: [u8; 8] = [4u8, 6u8, 0u8, 0u8, 0u8, 0u8, 0u8, 5u8];
 
-const ROM: &[u8; 264] = include_bytes!("../games/PONG2");
-const KEYMAP: [u8; 8] = [0x0u8, 0x0u8, 0x1u8, 0x4u8, 0x0u8, 0x0u8, 0xCu8, 0xDu8];
+const ROM: &[u8; 280] = include_bytes!("../games/BRIX");
+const KEYMAP: [u8; 8] = [4u8, 6u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
 
 #[app(device = stm32f3xx_hal::stm32, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
