@@ -1,6 +1,8 @@
 # About chip8rtic
 chip8rtic is a [rust embedded](https://www.rust-lang.org/what/embedded) learning project. A video of the embedded emulator working can be found in this [tweet](https://twitter.com/i/status/1298543916007018496).
 
+chip8vm and chip8rtic were inspired by Chapter 5 of [Rust in Action](https://manning.com/books/rust-in-action) by Tim McNamara.
+
 # Hardware
 This emulator runs on a STM32F3DISCOVERY board with a STM32F303VCT6 chip and a 128x64 I2C display with the sh1106 chip.
 
