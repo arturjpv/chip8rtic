@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chip8vm = {path="../chip8vm"}
+chip8vm = { git = "https://github.com/arturjpv/chip8vm" }
 panic-halt = "0.2"
 cortex-m = "0.6.2"
 cortex-m-rt = "0.6.12"
