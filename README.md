@@ -44,6 +44,8 @@ cargo embed --release
 ```
 
 # Future work
+* Make a small GUI to select ROM.
+* Add a reset button.
 * Optimize the system for power consumption, as it should work with batteries.
 * Design a small PCB for the system and make it open hardware.
 * Design a case for it and release the STL files.
